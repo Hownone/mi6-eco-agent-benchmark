@@ -1,0 +1,50 @@
+{% for clock in clocks %}
+{% if loop.first %}
+set clk_period {{ clock.period_ns }}
+{% endif %}
+{% endfor %}
+
+{% for clock in clocks %}
+{% if loop.first %}
+create_clock [get_ports {{ clock.port_name }}] -name {{ clock.clock_name }} -period $clk_period
+{% else %}
+create_clock -name {{ clock.clock_name }} -period {{ clock.period_ns }} [get_ports {{ clock.port_name }}]
+{% endif %}
+{% endfor %}
+
+{% for group in clock_groups %}
+set_clock_groups -{{ group.group_type }} \
+{% for g in group.groups %}
+  -group { {{ g | join(' ') }} }{% if not loop.last %} \{% endif %}
+
+{% endfor %}
+{% endfor %}
+
+{% for rst in reset_ports %}
+set_false_path -from [get_ports {{ rst }}]
+{% endfor %}
+
+set_max_fanout {{ max_fanout }} [current_design]
+
+set_clock_uncertainty {{ clock_uncertainty_setup_ns }} -setup [all_clocks]
+set_clock_uncertainty {{ clock_uncertainty_hold_ns }}  -hold  [all_clocks]
+
+{% for clock in clocks %}
+{% if loop.first %}
+set_max_transition {{ max_transition_ns }} -data_path  [get_clocks {{ clock.clock_name }}]
+set_max_transition {{ max_transition_ns }} -clock_path [get_clocks {{ clock.clock_name }}]
+{% endif %}
+{% endfor %}
+
+set_clock_transition {{ clock_transition_ns }} [all_clocks]
+
+set_input_transition 0.3 [all_inputs]
+set_load 0.2 [all_outputs]
+
+{% if clocks %}
+{% set primary_clock = clocks[0] %}
+set _data_in [remove_from_collection [all_inputs] [get_ports -quiet { {{ non_data_ports | join(' ') }} }]]
+
+set_input_delay  {{ io_delay_ns }} -clock [get_clocks {{ primary_clock.clock_name }}] -add_delay -max $_data_in
+set_output_delay {{ io_delay_ns }} -clock [get_clocks {{ primary_clock.clock_name }}] -add_delay -max [all_outputs]
+{% endif %}
