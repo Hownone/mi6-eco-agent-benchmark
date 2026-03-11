@@ -1,0 +1,33 @@
+[project]
+name = "mi6-eco-agent-benchmark"
+version = "0.1.0"
+description = "Benchmark case builder for mi6-eco-agents"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.1",
+    "jinja2>=3.1",
+    "litellm>=1.40",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+]
+
+[project.scripts]
+benchmark = "benchmark.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/benchmark"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.basedpyright]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
